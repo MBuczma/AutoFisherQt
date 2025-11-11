@@ -34,6 +34,7 @@ private:
     std::unique_ptr<QTimer> keyTimer;
     std::unique_ptr<QTimer> countdownTimer;
     std::unique_ptr<AutoKeyPresser> autoKeyPresser;
+    std::unique_ptr<QTimer> foodTimer; // nowy, niezależny timer
 
     HWND handle = NULL;
     HWND parentHandle = NULL;
@@ -49,6 +50,7 @@ private:
     void aktualizujStanPrzyciskuStart();
     bool sequenceRunning = false;
     void wyslijSekwencje(); // nowa pętla sekwencji
+    void wyslijJedzenie();  // slot wysyłający klawisz jedzenia
 
 protected:
     void mouseReleaseEvent(QMouseEvent *event) override;

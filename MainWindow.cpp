@@ -18,12 +18,14 @@ MainWindow::MainWindow(QWidget *parent)
     autoKeyPresser = std::make_unique<AutoKeyPresser>();
     keyTimer = std::make_unique<QTimer>(this);
     countdownTimer = std::make_unique<QTimer>(this);
+    foodTimer = std::make_unique<QTimer>(this);
 
     connect(ui->pushButton_Start, &QPushButton::clicked, this, &MainWindow::start);
     connect(ui->pushButton_Stop, &QPushButton::clicked, this, &MainWindow::stop);
     connect(ui->pushButton_PobierzID, &QPushButton::clicked, this, &MainWindow::ZlapIdOkna);
 
     connect(keyTimer.get(), &QTimer::timeout, this, &MainWindow::wyslijKlawisze);
+    connect(foodTimer.get(), &QTimer::timeout, this, &MainWindow::wyslijJedzenie);
 
     // Dodaj wszystkie klawisze z mapy KeyMap
     for (const auto &pair : KeyMap::getOrderedList()) {
@@ -138,13 +140,21 @@ bool MainWindow::start()
     QString klawiszWedka = ui->comboBox_Wedka->currentText();
     if (isSending == false) {
         if (klawiszWedka.isEmpty() == false && handle != nullptr) {
-            qDebug() << "[GroupBoxControl] wysylanieStart() " << " uchwyt:" << windowText << "-"
-                     << parentWindowText;
             isSending = true;
             aktualizujStanPrzyciskuStart();
-            //wyslijKlawisze();
+
+            // 1) natychmiast wyślij "Jedzenie"
+            wyslijJedzenie();
+
+            // 2) uruchom niezależny timer dla jedzenia
+            int foodIntervalMs = ui->spinBox_Czas_ryby->value()
+                                 * 1000; // PODMIEŃ na spinBox dla jedzenia, jeśli masz
+            foodTimer->start(qMax(100, foodIntervalMs)); // bezpieczne minimum
+
+            // 3) reszta jak dotąd: pętla łowienia
             wyslijSekwencje();
-            std::thread([] { Beep(1000, 100); }).detach(); // 1000 Hz przez 100 ms
+
+            std::thread([] { Beep(1000, 100); }).detach();
 
             int interval = qMax(2000, ui->spinBox_Czas_ryby->value() * 1000);
             remainingTime = interval;
@@ -161,13 +171,13 @@ bool MainWindow::start()
 bool MainWindow::stop()
 {
     if (isSending == true) {
-        qDebug() << "[GroupBoxControl] wysylanieStop() =" << windowText << "-" << parentWindowText;
         isSending = false;
-        std::thread([] { Beep(500, 50); }).detach(); // 500 Hz przez 50 ms
         aktualizujStanPrzyciskuStart();
+        if (foodTimer)
+            foodTimer->stop(); // <--- stop niezależnego timera
+        std::thread([] { Beep(500, 100); }).detach();
         return true;
     } else {
-        qDebug() << "[GroupBoxControl][wysylanieStop] Zatrzymanie się nie powiodło";
         return false;
     }
 }
@@ -247,4 +257,14 @@ void MainWindow::wyslijSekwencje()
             });
         });
     });
+}
+
+void MainWindow::wyslijJedzenie()
+{
+    if (!isSending || handle == nullptr)
+        return;
+    const QString title = ui->groupBox_gra->title();
+    const QString foodKey = ui->comboBox_Jedzenie->currentText();
+    if (!foodKey.isEmpty())
+        autoKeyPresser->SendKey(handle, foodKey, title);
 }
