@@ -2,9 +2,11 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTimer>
 #include "AutoKeyPresser.h"
 #include "KeyMap.h"
 #include <Windows.h>
+#include <memory>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -23,7 +25,7 @@ public:
 private slots:
     bool start();
     bool stop();
-
+    void wyslijKlawisze();
     void zaktualizujNazwe();
 
 private:
@@ -39,11 +41,14 @@ private:
     QString parentWindowText = "";
     bool isSending = false;
     int remainingTime = 0;
+    POINT point;
 
     void ZlapIdOkna();
     bool isButtonPressedGlobal = false;
     bool isButtonPressed = false;
     void aktualizujStanPrzyciskuStart();
+    bool sequenceRunning = false;
+    void wyslijSekwencje(); // nowa pętla sekwencji
 
 protected:
     void mouseReleaseEvent(QMouseEvent *event) override;

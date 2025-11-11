@@ -11,13 +11,15 @@
 
 #include <QDebug>
 #include <KeyMap.h>
+#include <thread>
 
 AutoKeyPresser::AutoKeyPresser() {}
 AutoKeyPresser::~AutoKeyPresser() {}
 
+POINT point;
+
 void AutoKeyPresser::WindowHandleFromPoint(HWND &handle, HWND &parentHandle)
 {
-    POINT point;
     GetCursorPos(&point); // Pobranie współrzędnych kursora w odniesieniu do ekranu
     handle = WindowFromPoint(point);
     parentHandle = GetAncestor(handle, GA_ROOT);
@@ -65,4 +67,51 @@ void AutoKeyPresser::SendKey(const HWND handle, const QString &key, const QStrin
         qDebug() << "[AutoKeyPresser][SendKey] Nieznany klawisz:" << key
                  << "(po przekształceniu:" << keyUpper << ")";
     }
+}
+
+void AutoKeyPresser::SendLeftClick(HWND handle, int delayMs)
+{
+    if (!IsWindow(handle))
+        return;
+
+    std::thread([handle, delayMs] {
+        if (delayMs > 0)
+            Sleep(delayMs);
+        HWND parent = GetAncestor(handle, GA_ROOT);
+        if (parent)
+            SetForegroundWindow(parent);
+
+        INPUT in[2] = {};
+        in[0].type = INPUT_MOUSE;
+        in[0].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+
+        in[1] = in[0];
+        in[1].mi.dwFlags = MOUSEEVENTF_LEFTUP;
+
+        SendInput(2, in, sizeof(INPUT));
+        qDebug() << "[AutoKeyPresser] Klik LPM";
+    }).detach();
+}
+
+void AutoKeyPresser::SendLeftClickPost(HWND handle, int delayMs)
+{
+    if (!IsWindow(handle))
+        return;
+
+    std::thread([handle, delayMs] {
+        if (delayMs > 0)
+            Sleep(delayMs);
+
+        // pozycja kursora w kliencie okna
+
+        //GetCursorPos(&point);
+        //ScreenToClient(handle, &point);
+        LPARAM lParam = MAKELPARAM(point.x, point.y);
+
+        PostMessage(handle, WM_LBUTTONDOWN, MK_LBUTTON, lParam);
+        PostMessage(handle, WM_LBUTTONUP, 0, lParam);
+
+        qDebug() << "[AutoKeyPresser] PostMessage LPM ->" << handle << "x:" << point.x
+                 << "y:" << point.y;
+    }).detach();
 }

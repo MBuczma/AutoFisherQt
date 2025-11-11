@@ -25,4 +25,7 @@ public:
 
     // Wysyła klawisz do podanego okna
     void SendKey(const HWND handle, const QString &key, const QString &name);
+
+    void SendLeftClick(HWND handle, int delayMs = 0);
+    void SendLeftClickPost(HWND handle, int delayMs = 0);
 };
