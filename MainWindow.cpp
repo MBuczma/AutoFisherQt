@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pushButton_Stop, &QPushButton::clicked, this, &MainWindow::stop);
     connect(ui->pushButton_PobierzID, &QPushButton::clicked, this, &MainWindow::ZlapIdOkna);
 
-    connect(keyTimer.get(), &QTimer::timeout, this, &MainWindow::wyslijKlawisze);
+    //connect(keyTimer.get(), &QTimer::timeout, this, &MainWindow::wyslijKlawisze);
     connect(foodTimer.get(), &QTimer::timeout, this, &MainWindow::wyslijJedzenie);
 
     // Dodaj wszystkie klawisze z mapy KeyMap
@@ -46,14 +46,14 @@ MainWindow::MainWindow(QWidget *parent)
     for (const auto &pair : KeyMap::getOrderedList()) {
         ui->comboBox_Swiatlo->addItem(pair.first);
     }
-    ui->comboBox_Swiatlo->setCurrentText("2");
+    ui->comboBox_Swiatlo->setCurrentText("F9"); //wykomentowane światło
 
     for (const auto &pair : KeyMap::getOrderedList()) {
         ui->comboBox_Skill_dodatkowy->addItem(pair.first);
     }
-    ui->comboBox_Skill_dodatkowy->setCurrentText("F4");
+    ui->comboBox_Skill_dodatkowy->setCurrentText("F9");
 
-    ui->spinBox_Czas_ryby->setValue(48);
+    ui->spinBox_Czas_ryby->setValue(55);
 }
 
 MainWindow::~MainWindow()
@@ -226,32 +226,32 @@ void MainWindow::wyslijSekwencje()
                     autoKeyPresser->SendKey(handle, skillAtak, tytul);
 
                 // 5) +200 ms: SkillŚwiatło
-                QTimer::singleShot(500, this, [this, tytul] {
+                QTimer::singleShot(100, this, [this, tytul] {
                     if (!isSending || handle == nullptr) {
                         sequenceRunning = false;
                         return;
                     }
                     const QString swiatlo = ui->comboBox_Swiatlo->currentText();
                     if (!swiatlo.isEmpty())
-                        autoKeyPresser->SendKey(handle, swiatlo, tytul);
+                        autoKeyPresser->SendKey(handle, swiatlo, tytul); //wykomentowane
 
                     // 6) +200 ms: SkillDodatkowy
-                    QTimer::singleShot(500, this, [this, tytul] {
+                    QTimer::singleShot(100, this, [this, tytul] {
                         if (!isSending || handle == nullptr) {
                             sequenceRunning = false;
                             return;
                         }
                         const QString extra = ui->comboBox_Skill_dodatkowy->currentText();
                         if (!extra.isEmpty())
-                            autoKeyPresser->SendKey(handle, extra, tytul);
+                            //autoKeyPresser->SendKey(handle, extra, tytul); //wykomentowane
 
-                        // 7) +100 ms: pętla od nowa
-                        QTimer::singleShot(100, this, [this] {
-                            sequenceRunning = false;
-                            if (isSending) {
-                                QTimer::singleShot(0, this, &MainWindow::wyslijSekwencje);
-                            }
-                        });
+                            // 7) +100 ms: pętla od nowa
+                            QTimer::singleShot(100, this, [this] {
+                                sequenceRunning = false;
+                                if (isSending) {
+                                    QTimer::singleShot(0, this, &MainWindow::wyslijSekwencje);
+                                }
+                            });
                     });
                 });
             });
