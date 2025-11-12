@@ -172,6 +172,7 @@ bool MainWindow::stop()
 {
     if (isSending == true) {
         isSending = false;
+        qDebug() << "MainWindow::stop() Zatrzymano wysylanie";
         aktualizujStanPrzyciskuStart();
         if (foodTimer)
             foodTimer->stop(); // <--- stop niezależnego timera
@@ -222,36 +223,39 @@ void MainWindow::wyslijSekwencje()
                     return;
                 }
                 const QString skillAtak = ui->comboBox_Skill_atak->currentText();
-                if (!skillAtak.isEmpty())
+                if (!skillAtak.isEmpty()) {
                     autoKeyPresser->SendKey(handle, skillAtak, tytul);
+                }
 
-                // 5) +200 ms: SkillŚwiatło
+                // 5) +100 ms: SkillŚwiatło
                 QTimer::singleShot(100, this, [this, tytul] {
                     if (!isSending || handle == nullptr) {
                         sequenceRunning = false;
                         return;
                     }
                     const QString swiatlo = ui->comboBox_Swiatlo->currentText();
-                    if (!swiatlo.isEmpty())
-                        autoKeyPresser->SendKey(handle, swiatlo, tytul); //wykomentowane
+                    if (!swiatlo.isEmpty()) {
+                        autoKeyPresser->SendKey(handle, swiatlo, tytul);
+                    }
 
-                    // 6) +200 ms: SkillDodatkowy
+                    // 6) +100 ms: SkillDodatkowy
                     QTimer::singleShot(100, this, [this, tytul] {
                         if (!isSending || handle == nullptr) {
                             sequenceRunning = false;
                             return;
                         }
                         const QString extra = ui->comboBox_Skill_dodatkowy->currentText();
-                        if (!extra.isEmpty())
-                            //autoKeyPresser->SendKey(handle, extra, tytul); //wykomentowane
+                        if (!extra.isEmpty()) {
+                            autoKeyPresser->SendKey(handle, extra, tytul);
+                        }
 
-                            // 7) +100 ms: pętla od nowa
-                            QTimer::singleShot(100, this, [this] {
-                                sequenceRunning = false;
-                                if (isSending) {
-                                    QTimer::singleShot(0, this, &MainWindow::wyslijSekwencje);
-                                }
-                            });
+                        // 7) +100 ms: pętla od nowa
+                        QTimer::singleShot(100, this, [this] {
+                            sequenceRunning = false;
+                            if (isSending) {
+                                QTimer::singleShot(0, this, &MainWindow::wyslijSekwencje);
+                            }
+                        });
                     });
                 });
             });
