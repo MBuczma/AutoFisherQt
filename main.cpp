@@ -7,8 +7,10 @@ void ustawStyl(QApplication &application);
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+    app.setWindowIcon(QIcon(":/AutoFisher.ico"));
     ustawStyl(app);
     MainWindow w;
+    w.setWindowTitle("AutoFisher");
     w.show();
     return app.exec();
 }
